@@ -1,0 +1,40 @@
+[package]
+name = "evolved-dragonfable-launcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+directories = "5"
+native-dialog = "0.6"
+
+# Futures and async
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio-util = "0.7"
+futures = "0.3"
+futures-util = "0.3"
+
+# HTTP
+reqwest = { version = "0.11", features = ["stream", "gzip", "brotli"] }
+axum = { version = "0.6", features = ["macros", "http2"] }
+tower-http = { version = "0.4", features = ["trace", "timeout"] }
+http = "0.2"
+
+# Logging
+tracing-subscriber = "0.3"
+tracing-core = "0.1"
+
+# Stream wrapper
+sync_wrapper = "0.1"
+pin-project-lite = "0.2"
+
+# Serialization / Deserialization
+serde = { version = "1", features = ["derive"] }
+roxmltree = "0.18"
+
+# Used for replacing strings in an SWF file
+byteorder = "1"
+flate2 = "1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Used to extract the `.tar.gz` flash player archive
+tar = "0.4"
