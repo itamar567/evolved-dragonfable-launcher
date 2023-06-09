@@ -39,7 +39,6 @@ async fn post_request_to_url_with_cache<F>(url: String, dir: String, headers: He
 where
     F: Fn(Document) -> String,
 {
-    dbg!(&form, &url, &headers);
     let form_data = if let Ok(decrypted_data) = encryption::decrypt(
         form.replace("<ninja2>", "")
             .replace("</ninja2>", "")
