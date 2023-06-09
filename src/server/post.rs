@@ -117,26 +117,50 @@ async fn post_request_with_cache<F>(path: Uri, headers: HeaderMap, form: String,
 
 pub async fn quest_load(path: Uri, headers: HeaderMap, form: String) -> impl IntoResponse {
     post_request_with_cache(path, headers, form, |doc| {
-        doc.root_element()
+        let mut result = doc.root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "intCharID")
+            .unwrap()
+            .text()
+            .unwrap()
+            .to_string();
+
+        let id = doc.root_element()
             .children()
             .find(|node| node.tag_name().name() == "intQuestID")
             .unwrap()
             .text()
-            .unwrap()
-            .to_string()
+            .unwrap();
+
+        result.push('/');
+        result.push_str(id);
+
+        result
     })
     .await
 }
 
 pub async fn load_town_info(path: Uri, headers: HeaderMap, form: String) -> impl IntoResponse {
     post_request_with_cache(path, headers, form, |doc| {
-        doc.root_element()
+        let mut result = doc.root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "intCharID")
+            .unwrap()
+            .text()
+            .unwrap()
+            .to_string();
+
+        let id = doc.root_element()
             .children()
             .find(|node| node.tag_name().name() == "intTownID")
             .unwrap()
             .text()
-            .unwrap()
-            .to_string()
+            .unwrap();
+
+        result.push('/');
+        result.push_str(id);
+
+        result
     })
     .await
 }
