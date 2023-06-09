@@ -1,4 +1,5 @@
 #![feature(lazy_cell)]
+#![windows_subsystem = "windows"]
 
 use std::fs;
 use std::fs::File;
