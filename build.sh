@@ -15,8 +15,8 @@ cp target/release/evolved-dragonfable-launcher ../ui/out/evolved-dragonfable-lau
 cp target/x86_64-pc-windows-gnu/release/evolved-dragonfable-launcher.exe ../ui/out/evolved-dragonfable-launcher-win32-x64/
 
 cd ../ui/out/
-( cd evolved-dragonfable-launcher-linux-x64 && zip ../evolved-dragonfable-launcher-linux.zip -r * )
-( cd evolved-dragonfable-launcher-win32-x64 && zip ../evolved-dragonfable-launcher-windows.zip -r * )
+( cd evolved-dragonfable-launcher-linux-x64 && zip ../evolved-dragonfable-launcher-linux.zip -r ./* )
+( cd evolved-dragonfable-launcher-win32-x64 && zip ../evolved-dragonfable-launcher-windows.zip -r ./* )
 
 [ ! -d "../../out" ] && mkdir ../../out
 
