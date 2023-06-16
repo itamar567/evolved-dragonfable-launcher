@@ -1,6 +1,7 @@
 #![feature(lazy_cell)]
 #![windows_subsystem = "windows"]
 
+#[cfg(not(debug_assertions))]
 use std::process::Command;
 use std::sync::LazyLock;
 use crate::config::LOCAL_SERVER_ADDR;
@@ -57,7 +58,13 @@ pub async fn main() {
         .layer(TraceLayer::new_for_http());
 
 
-    tokio::spawn(axum::Server::bind(&LOCAL_SERVER_ADDR.parse().unwrap()).serve(app.into_make_service()));
-
-    Command::new("./ui").spawn().unwrap().wait().unwrap();
+    #[cfg(not(debug_assertions))]
+    {
+        tokio::spawn(axum::Server::bind(&LOCAL_SERVER_ADDR.parse().unwrap()).serve(app.into_make_service()));
+        Command::new("./ui").spawn().unwrap().wait().unwrap();
+    }
+    #[cfg(debug_assertions)]
+    {
+        axum::Server::bind(&LOCAL_SERVER_ADDR.parse().unwrap()).serve(app.into_make_service()).await.unwrap();
+    }
 }
