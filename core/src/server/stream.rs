@@ -1,4 +1,3 @@
-use crate::files;
 use axum::{
     body::{self, Bytes, HttpBody},
     response::{IntoResponse, Response},
@@ -7,7 +6,6 @@ use axum::{
 use futures_util::{ready, stream::TryStream};
 use http::HeaderMap;
 use pin_project_lite::pin_project;
-use std::path::PathBuf;
 use std::sync::mpsc;
 use std::sync::mpsc::Receiver;
 use std::{
@@ -16,6 +14,7 @@ use std::{
     task::{Context, Poll},
 };
 use sync_wrapper::SyncWrapper;
+use crate::character::parse_post_request;
 
 pub enum StreamBodySenderMessage {
     Chunk(Bytes),
@@ -30,22 +29,36 @@ pin_project! {
         stream: SyncWrapper<S>,
 
         send_channel: Option<mpsc::Sender<StreamBodySenderMessage>>,
+        parse_channel: Option<mpsc::Sender<StreamBodySenderMessage>>
     }
 }
 
 impl<S> StreamBodySender<S> {
-    /// Create a new `StreamBody` from a [`Stream`].
+    /// Create a new `StreamBodySender` from a [`Stream`].
     ///
     /// [`Stream`]: futures_util::stream::Stream
-    pub fn new(stream: S, send_channel: Option<mpsc::Sender<StreamBodySenderMessage>>) -> Self
+    pub fn new(stream: S, send_channel: Option<mpsc::Sender<StreamBodySenderMessage>>, path: Option<String>) -> Self
     where
         S: TryStream + Send + 'static,
         S::Ok: Into<Bytes>,
         S::Error: Into<BoxError>,
     {
+        let mut parse_channel = None;
+        if let Some(path) = path {
+            let (tx, rx) = mpsc::channel();
+            tokio::spawn(async move {
+                let stream_data = get_stream_data_blocking(rx);
+                if let Ok(stream_data_str) = std::str::from_utf8(stream_data.as_ref()) {
+                    parse_post_request(stream_data_str, path.as_str()).await;
+                }
+            });
+            parse_channel = Some(tx);
+        }
+
         Self {
             stream: SyncWrapper::new(stream),
             send_channel,
+            parse_channel,
         }
     }
 }
@@ -81,6 +94,7 @@ where
         cx: &mut Context<'_>,
     ) -> Poll<Option<Result<Self::Data, Self::Error>>> {
         let send_channel = self.send_channel.clone();
+        let parse_channel = self.parse_channel.clone();
 
         let stream = self.project().stream.get_pin_mut();
         match ready!(stream.try_poll_next(cx)) {
@@ -95,6 +109,11 @@ where
 
                 if let Some(send_channel) = send_channel {
                     send_channel
+                        .send(StreamBodySenderMessage::Chunk(chunk_data.clone()))
+                        .unwrap();
+                }
+                if let Some(parse_channel) = parse_channel {
+                    parse_channel
                         .send(StreamBodySenderMessage::Chunk(chunk_data.clone()))
                         .unwrap();
                 }
@@ -130,11 +149,9 @@ where
     }
 }
 
-/// Write the data of a `StreamBodySender` to a file (`dest`)
-pub fn write_stream_to_file(dest: &PathBuf, receiver: Receiver<StreamBodySenderMessage>) {
+pub fn get_stream_data_blocking(receiver: Receiver<StreamBodySenderMessage>) -> Vec<u8> {
     let mut result = Vec::new();
 
-    let mut succeeded = false;
     while let Ok(message) = receiver.recv() {
         match message {
             StreamBodySenderMessage::Chunk(chunk) => {
@@ -143,13 +160,10 @@ pub fn write_stream_to_file(dest: &PathBuf, receiver: Receiver<StreamBodySenderM
                 }
             }
             StreamBodySenderMessage::Finished => {
-                succeeded = true;
                 break;
             }
         }
     }
 
-    if succeeded {
-        files::write_file(dest, result).unwrap();
-    }
+    result
 }

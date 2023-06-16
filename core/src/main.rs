@@ -1,49 +1,30 @@
 #![feature(lazy_cell)]
 #![windows_subsystem = "windows"]
 
-use std::fs;
-use std::fs::File;
-use crate::config::{LOCAL_SERVER_ADDR, PROJECT_DIRS};
+use std::process::Command;
+use std::sync::LazyLock;
+use crate::config::LOCAL_SERVER_ADDR;
 use axum::extract::Path;
 use axum::routing::{get, post};
 use axum::Router;
 use http::{HeaderMap, Uri};
-use native_dialog::{MessageDialog, MessageType};
 use tower_http::trace::TraceLayer;
 use tracing_core::Level;
 use tracing_subscriber::filter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
+use reqwest::Client;
 
 mod config;
 mod encryption;
 mod files;
-mod flash_player;
 mod server;
+mod character;
+
+static REQWEST_CLIENT: LazyLock<Client> = LazyLock::new(Client::new);
 
 #[tokio::main]
 pub async fn main() {
-    let warning_file_path = PROJECT_DIRS.data_dir().join("removewarning");
-    if !warning_file_path.exists() {
-        if MessageDialog::new()
-            .set_type(MessageType::Warning)
-            .set_title("Disclaimer")
-            .set_text("This is a 3rd party launcher that is not supported nor endorsed by Artix Entertainment.\
-                \nUse this launcher at your own risk.\
-                \nClick 'Yes' to use this launcher anyways, and click 'No' to close the app.")
-            .show_confirm()
-            .unwrap() {
-
-            fs::create_dir_all(PROJECT_DIRS.data_dir()).unwrap();
-            File::create(&warning_file_path).unwrap();
-        }
-        else {
-            return;
-        }
-    }
-
-    let mut flash_player_process = flash_player::start_flash_player().expect("Failed to run Flash Player");
-
     tracing_subscriber::registry()
         .with(tracing_subscriber::fmt::layer())
         .with(
@@ -75,7 +56,8 @@ pub async fn main() {
         .fallback(get(server::get::unhandled_get_request).post(server::post::unhandled_post_request))
         .layer(TraceLayer::new_for_http());
 
+
     tokio::spawn(axum::Server::bind(&LOCAL_SERVER_ADDR.parse().unwrap()).serve(app.into_make_service()));
 
-    flash_player_process.wait().unwrap();
+    Command::new("./ui").spawn().unwrap().wait().unwrap();
 }

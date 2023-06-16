@@ -1,8 +1,7 @@
 use crate::config::{PROJECT_DIRS, REMOTE_SERVER_ADDR, REMOTE_SERVER_URL};
 use crate::{encryption, files};
-use crate::server::stream::{write_stream_to_file, StreamBodySender};
-use crate::server::REQWEST_CLIENT;
-use axum::body::StreamBody;
+use crate::server::stream::{StreamBodySender, get_stream_data_blocking};
+use crate::REQWEST_CLIENT;
 use axum::response::{IntoResponse, Response};
 use http::{HeaderMap, StatusCode, Uri};
 use roxmltree::Document;
@@ -28,10 +27,10 @@ async fn send_post_request(path: Uri, headers: HeaderMap, form: String) -> reqwe
 }
 
 pub async fn unhandled_post_request(path: Uri, headers: HeaderMap, form: String) -> impl IntoResponse {
-    let remote_server_response = send_post_request(path, headers, form).await;
+    let remote_server_response = send_post_request(path.clone(), headers, form).await;
     Response::builder()
         .status(remote_server_response.status())
-        .body(StreamBody::new(remote_server_response.bytes_stream()))
+        .body(StreamBodySender::new(remote_server_response.bytes_stream(), None, Some(format!("{REMOTE_SERVER_URL}{path}"))))
         .unwrap()
 }
 
@@ -55,7 +54,7 @@ where
         if cache_file_path.exists() {
             let file = File::open(&cache_file_path).await.unwrap();
             let stream = ReaderStream::new(file);
-            let body = StreamBodySender::new(stream, None);
+            let body = StreamBodySender::new(stream, None, Some(url.clone()));
 
             // Send the POST request to the remote server in the background, and update the cache
             tokio::spawn(async move {
@@ -72,16 +71,16 @@ where
                 .into_response();
         }
 
-        let remote_server_response = send_post_request_to_url(url, headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
+        let remote_server_response = send_post_request_to_url(url.clone(), headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
 
         let (tx, rx) = mpsc::channel();
 
         let status = remote_server_response.status();
-        let stream = StreamBodySender::new(remote_server_response.bytes_stream(), Some(tx));
+        let stream = StreamBodySender::new(remote_server_response.bytes_stream(), Some(tx), Some(url));
 
         if status == StatusCode::OK {
             tokio::spawn(async move {
-                write_stream_to_file(&cache_file_path, rx);
+                files::write_file(&cache_file_path, get_stream_data_blocking(rx)).unwrap();
             });
         }
 
@@ -92,13 +91,14 @@ where
             .into_response()
     } else {
         println!("Couldn't parse client data as XML");
-        let remote_server_response = send_post_request_to_url(url, headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
+        let remote_server_response = send_post_request_to_url(url.clone(), headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
 
         Response::builder()
             .status(remote_server_response.status())
             .body(StreamBodySender::new(
                 remote_server_response.bytes_stream(),
                 None,
+                Some(url),
             ))
             .unwrap()
             .into_response()

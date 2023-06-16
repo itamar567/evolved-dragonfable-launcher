@@ -1,9 +1,10 @@
 use std::fs;
 use std::path::PathBuf;
 use crate::config::{PROJECT_DIRS, REMOTE_SERVER_ADDR, REMOTE_SERVER_URL};
-use crate::server::stream::{write_stream_to_file, StreamBodySender};
-use crate::server::{REQWEST_CLIENT, utils};
-use axum::body::{Body, StreamBody};
+use crate::server::stream::{StreamBodySender, get_stream_data_blocking};
+use crate::server::utils;
+use crate::REQWEST_CLIENT;
+use axum::body::Body;
 use axum::response::{IntoResponse, Response};
 use http::{HeaderMap, StatusCode, Uri};
 use std::sync::mpsc;
@@ -29,7 +30,7 @@ pub async fn unhandled_get_request(path: Uri, headers: HeaderMap) -> impl IntoRe
 
     Response::builder()
         .status(remote_server_response.status())
-        .body(StreamBody::new(remote_server_response.bytes_stream()))
+        .body(StreamBodySender::new(remote_server_response.bytes_stream(), None, None))
         .unwrap()
 }
 
@@ -43,7 +44,7 @@ async fn get_cached_request(cache_file_path: &PathBuf) -> Option<Response> {
     if cache_file_path.exists() {
         let file = File::open(&cache_file_path).await.unwrap();
         let stream = ReaderStream::new(file);
-        let body = StreamBodySender::new(stream, None);
+        let body = StreamBodySender::new(stream, None, None);
 
         return Some(Response::builder()
             .status(StatusCode::OK)
@@ -66,29 +67,13 @@ pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoR
     let (tx, rx) = mpsc::channel();
 
     let status = remote_server_response.status();
-    let stream = StreamBodySender::new(remote_server_response.bytes_stream(), Some(tx));
+    let stream = StreamBodySender::new(remote_server_response.bytes_stream(), Some(tx), None);
 
     if status == StatusCode::OK {
         tokio::spawn(async move {
-            write_stream_to_file(&cache_file_path, rx);
+            files::write_file(&cache_file_path, get_stream_data_blocking(rx)).unwrap();
         });
-
-        // let game_regex = Regex::new(r"^/game/gamefiles/game\d+_\d+_\d+\.swf$").unwrap();
-        // if game_regex.is_match(path.to_string().as_str()) {
-        //
-        //     let modified_bytes;
-        //     if let Ok(replaced_bytes) = swf::replace_string_in_swf(bytes.as_ref(), "dragonfable.battleon.com", LOCAL_SERVER_ADDR) {
-        //         modified_bytes = replaced_bytes;
-        //     }
-        //     else {
-        //         modified_bytes = bytes;
-        //     }
-        //     stream = StreamBodySender::new(Body::from(modified_bytes), tx);
-        // }
     }
-    // else {
-    //     stream = ;
-    // }
 
     Response::builder()
         .status(status)

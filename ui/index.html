@@ -1,0 +1,305 @@
+<html lang="en">
+    <head>
+        <title>Evolved DragonFable Launcher</title>
+    </head>
+    <body style="background-color: #660000; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
+        </div>
+
+        <div id="game_container">
+            <embed base="http://127.0.0.1:39260/game/" src="http://127.0.0.1:39260/game/DFLoader.swf" id="game" style="flex: 3">
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; color: white">
+            <div style="display: flex; flex-direction: column; align-items: center">
+                <label style="user-select: none">Quality</label>
+                <label>
+                    <input type="range" min="25" max="100" value="100" onchange="onQualitySliderChange();" id="quality_slider">
+                </label>
+            </div>
+
+            <div id="item_tracker" style="display: none; flex-direction: column; align-items: center">
+                <div style="flex-direction: row">
+                    <label style="user-select: none">Item Tracker</label>
+                    <label>
+                        <input type="checkbox" onchange="updateItemTrackerVisibility();" id="item_tracker_checkbox">
+                    </label>
+                </div>
+                <div id="item_tracker_content_container" style="display: none; flex-direction: column; align-items: center">
+                    <label>
+                        <select id="item_select" onchange="onItemSelect();"></select>
+                    </label>
+                    <div>
+                        <label>Current amount:&nbsp;</label>
+                        <label id="current_item_count"></label>
+                        <br>
+                    </div>
+                    <div id="goal_stats_container" style="display: none; flex-direction: column; align-items: center">
+                        <div style="flex-direction: row">
+                            <label>Items left:&nbsp;</label>
+                            <label id="items_left_for_goal"></label>
+                            <br>
+                        </div>
+                        <div id="estimated_time_until_goal_container" style="display: none; flex-direction: column; align-items: center">
+                            <label>Estimated time:&nbsp;</label>
+                            <label id="estimated_time_until_goal"></label>
+                        </div>
+                    </div>
+                    <div id="average_item_rate_container" style="display: none; flex-direction: row; align-items: center">
+                        <label>Average:&nbsp;</label>
+                        <label id="average_item_rate">0.00</label>
+                        <label>&nbsp;per minute</label>
+                        <br>
+                    </div>
+                    <label>
+                        Goal:&nbsp;<input type="number" id="goal" onchange="updateItemTracking(false)">
+                    </label>
+                    <button id="toggle_button" onclick="toggleTimer()">Start</button>
+                </div>
+            </div>
+
+            <div style="text-align: center">
+                <label>Press Alt+Enter after clicking in the red areas for fullscreen</label>
+            </div>
+        </div>
+
+        <script>
+            let game = document.getElementById("game");
+            let game_container = document.getElementById("game_container");
+            let quality_slider = document.getElementById("quality_slider");
+
+            let item_select = document.getElementById("item_select");
+            let average_item_rate = document.getElementById("average_item_rate");
+            let average_item_rate_container = document.getElementById("average_item_rate_container");
+            let estimated_time_until_goal = document.getElementById("estimated_time_until_goal");
+            let estimated_time_until_goal_container = document.getElementById("estimated_time_until_goal_container");
+            let current_item_count = document.getElementById("current_item_count");
+            let items_left_for_goal = document.getElementById("items_left_for_goal");
+            let goal = document.getElementById("goal");
+            let toggle_button = document.getElementById("toggle_button");
+            let item_tracker = document.getElementById("item_tracker");
+            let goal_stats_container = document.getElementById("goal_stats_container");
+
+            let item_tracker_content_container = document.getElementById("item_tracker_content_container");
+            let item_tracker_checkbox = document.getElementById("item_tracker_checkbox");
+
+            let saved_quality_slider_value = window.localStorage.getItem("quality_slider_value");
+            if (saved_quality_slider_value) {
+                quality_slider.value = saved_quality_slider_value;
+            }
+
+            function updateItemTrackerVisibility() {
+                item_tracker_content_container.style.display = item_tracker_checkbox.checked ? "flex" : "none";
+            }
+
+            function onQualitySliderChange() {
+                window.localStorage.setItem("quality_slider_value", quality_slider.value);
+                resize();
+            }
+
+            function resize() {
+                game_container.style.width = (window.innerHeight * (15 / 11)).toString();
+                let quality = quality_slider.value / 100;
+                game.style.transform = "scale(" + 1 / quality + ")";
+                game.style.width = quality_slider.value + "%";
+                game.style.height = quality_slider.value + "%";
+                game.style.marginTop = Math.floor(game.clientHeight * ((1 / quality) - 1) / 2).toString();
+                game.style.marginLeft = Math.floor(game.clientWidth * ((1 / quality) - 1) / 2).toString();
+            }
+
+            resize();
+
+            window.addEventListener("resize", resize);
+            document.addEventListener("fullscreenchange", resize);
+
+            let current_item;
+            let character_id;
+
+            let trackedSeconds = 0;
+            let trackedItems = 0;
+            let isPaused = true;
+            let trackInterval;
+            let rate;
+
+            function updateTimer() {
+                trackedSeconds++;
+            }
+
+            function toggleTimer() {
+                if (isPaused) {
+                    trackInterval = setInterval(updateTimer, 1000);
+                    isPaused = false;
+                    toggle_button.textContent = "Stop"
+
+                    updateItemTracking(false);
+                }
+                else {
+                    resetItemTracking();
+                }
+            }
+
+            function formatTime(seconds) {
+                let days = Math.floor(seconds / 86400);
+                let hours = Math.floor((seconds % 86400) / 3600);
+                let minutes = Math.floor((seconds % 3600) / 60);
+
+                let colonNeeded = false;
+                let result = "";
+                if (days !== 0) {
+                    result += `${days} day(s)`;
+                    colonNeeded = true;
+                }
+                if (hours !== 0) {
+                    if (colonNeeded) {
+                        result += ", "
+                    }
+                    result += `${hours} hour(s)`
+                    colonNeeded = true;
+                }
+                if (colonNeeded) {
+                    result += ", ";
+                }
+                result += `${minutes} minute(s)`
+
+                return result;
+            }
+
+            function onItemSelect() {
+                current_item = JSON.parse(item_select.value);
+                resetItemTracking();
+            }
+
+            function resetItemTracking() {
+                clearInterval(trackInterval);
+                trackedSeconds = 0;
+                trackedItems = 0;
+                isPaused = true;
+                toggle_button.textContent = "Start";
+                average_item_rate_container.style.display = "none";
+                estimated_time_until_goal_container.style.display = "none";
+                updateItemTracking(true);
+            }
+
+            function initializeItemTracking(json_data) {
+                character_id = json_data.id;
+                if (character_id != null) {
+                    item_tracker.style.display = "flex";
+                }
+                current_item = json_data.all_items[0];
+
+                resetItemTracking();
+
+                updateItemSelection(json_data);
+                updateItemTracking(true);
+            }
+
+            function updateItemSelection(json_data) {
+                while (item_select.firstChild) {
+                    item_select.removeChild(item_select.firstChild);
+                }
+                let options = [];
+                for (let item_key in json_data.all_items) {
+                    let item = json_data.all_items[item_key];
+                    if (item.max_item_amount > 1) {
+                        let selected;
+                        if (current_item == null) {
+                            selected = item.name === "Defender's Medal";
+                        }
+                        else {
+                            selected = item.id === current_item.id;
+                        }
+                        let option = new Option(item.name, JSON.stringify(item), false, item === current_item);
+                        options.push(option);
+                    }
+                }
+                options.sort(function(o1, o2) {
+                    if (o1.text === "Defender's Medal") {
+                        return -1;
+                    }
+                    if (o1.text < o2.text) {
+                        return -1;
+                    }
+                    if (o1.text > o2.text) {
+                        return 1;
+                    }
+                    return 0;
+                })
+                for (let option of options) {
+                    item_select.appendChild(option);
+                }
+            }
+
+            function isNumber(num) {
+                return (typeof num === "number") && !isNaN(num);
+            }
+
+            function updateItemTracking(update_rate) {
+                current_item_count.textContent = current_item.item_amount.toString();
+
+                if (update_rate) {
+                    rate = (trackedItems / trackedSeconds) * 60;
+                }
+                let enable_item_rate_stats = !isPaused && isNumber(rate) && rate !== 0;
+                if (enable_item_rate_stats) {
+                    average_item_rate_container.style.display = "flex";
+                    average_item_rate.textContent = rate.toFixed(2);
+                }
+
+                const goal_number = parseInt(goal.value);
+
+                goal_stats_container.style.display = !isNumber(goal_number) ? "none" : "flex";
+
+                if (isNumber(goal_number)) {
+                    const amount_of_items_left_for_goal = goal_number - parseInt(current_item.item_amount);
+
+                    if (amount_of_items_left_for_goal <= 0) {
+                        items_left_for_goal.textContent = "None!";
+                    }
+                    else {
+                        items_left_for_goal.textContent = amount_of_items_left_for_goal.toString();
+                        if (enable_item_rate_stats) {
+                            estimated_time_until_goal_container.style.display = "flex";
+                            estimated_time_until_goal.textContent = formatTime((amount_of_items_left_for_goal / rate) * 60);
+                        }
+                    }
+                }
+            }
+
+            function updateItem(json_data) {
+                let gained_item = false;
+                for (let item_key in json_data.all_items) {
+                    let item = json_data.all_items[item_key];
+                    if (item.id === current_item.id) {
+                        let amount_gained = item.item_amount - current_item.item_amount;
+                        if (amount_gained > 0) {
+                            gained_item = true;
+                        }
+                        if (!isPaused) {
+                            trackedItems += amount_gained;
+                        }
+                        current_item_count.textContent = item.item_amount;
+
+                        current_item = item;
+                    }
+                }
+
+                updateItemSelection(json_data);
+
+                if (gained_item) {
+                    updateItemTracking(true);
+                }
+            }
+
+            function receiveCharacterData(data) {
+                let json_data = JSON.parse(decodeURIComponent(data));
+
+                if (json_data.id !== character_id) {
+                    initializeItemTracking(json_data);
+                }
+                else {
+                    updateItem(json_data);
+                }
+            }
+        </script>
+    </body>
+</html>

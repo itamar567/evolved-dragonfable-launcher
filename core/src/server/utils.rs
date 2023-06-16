@@ -88,8 +88,6 @@ pub fn replace_da_check_url_in_swf<R: Read>(mut swf: R) -> Result<Bytes, ()> {
     let mut replaced_swf_body = replace_slice(&uncompressed_swf, "https://dragonfable.battleon.com/game/cf-dacheck.asp".as_bytes(), "http://127.0.0.1:39260/game/cf-dacheck.asp_____https".as_bytes());
     replaced_swf_body = replace_slice(&replaced_swf_body, "http://dragonfable.battleon.com/game/cf-dacheck.asp".as_bytes(), "http://127.0.0.1:39260/game/cf-dacheck.asp_____http".as_bytes());
 
-    dbg!(byteorder::LittleEndian::read_u32(&length));
-
     // Compression
     // We disable compression due to high transfer speeds
     let mut result = Vec::new();
@@ -101,8 +99,6 @@ pub fn replace_da_check_url_in_swf<R: Read>(mut swf: R) -> Result<Bytes, ()> {
     if result.write(&version).is_err() {
         return Err(());
     }
-
-    dbg!(replaced_swf_body.len() + 8);
 
     // Length
     let mut new_length = [0u8; 4];

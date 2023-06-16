@@ -1,2 +1,9 @@
-/target
-/Cargo.lock
+/core/target
+/core/Cargo.lock
+
+/ui/node_modules
+/ui/package-lock.json
+/ui/plugins/*
+/ui/out
+
+/out

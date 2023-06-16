@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 directories = "5"
-native-dialog = "0.6"
+dashmap = { version = "5", features = ["serde"] }
 
 # Futures and async
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
@@ -14,7 +14,7 @@ futures = "0.3"
 futures-util = "0.3"
 
 # HTTP
-reqwest = { version = "0.11", features = ["stream", "gzip", "brotli"] }
+reqwest = { version = "0.11", features = ["stream", "gzip", "brotli", "json"] }
 axum = { version = "0.6", features = ["macros", "http2"] }
 tower-http = { version = "0.4", features = ["trace", "timeout"] }
 http = "0.2"
