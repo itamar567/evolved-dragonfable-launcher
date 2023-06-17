@@ -90,6 +90,9 @@
 
             function updateItemTrackerVisibility() {
                 item_tracker_content_container.style.display = item_tracker_checkbox.checked ? "flex" : "none";
+                if (!item_tracker_checkbox.checked) {
+                    resetItemTracking();
+                }
             }
 
             function onQualitySliderChange() {
