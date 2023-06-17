@@ -34,20 +34,6 @@ const createWindow = () => {
     })
 
     app.listen(39621, "127.0.0.1", () => {})
-
-    const menu = new Menu()
-    menu.append(new MenuItem({
-        label: "Electron",
-        submenu: [{
-            role: "Fullscreen",
-            accelerator: "Alt+Enter",
-            click: () => {
-                win.setFullScreen(!win.isFullScreen());
-            }
-        }]
-    }))
-
-    Menu.setApplicationMenu(menu)
 }
 
 app.whenReady().then(() => {
@@ -56,6 +42,30 @@ app.whenReady().then(() => {
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
+
+    const menu = new Menu()
+    menu.append(new MenuItem({
+        label: "Electron",
+        submenu: [
+            {
+                role: "Fullscreen",
+                accelerator: "Alt+Enter",
+                click: () => {
+                    let win = BrowserWindow.getFocusedWindow();
+                    win.setFullScreen(!win.isFullScreen());
+                }
+            },
+            {
+                role: "Developer Tools",
+                accelerator: "Ctrl+Shift+I",
+                click: () => {
+                    BrowserWindow.getFocusedWindow().webContents.toggleDevTools();
+                }
+            }
+        ]
+    }))
+
+    Menu.setApplicationMenu(menu)
 })
 
 app.on("window-all-closed", () => {
