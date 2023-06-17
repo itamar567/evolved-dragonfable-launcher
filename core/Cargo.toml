@@ -30,6 +30,7 @@ pin-project-lite = "0.2"
 # Serialization / Deserialization
 serde = { version = "1", features = ["derive"] }
 roxmltree = "0.18"
+base64 = "0.21"
 
 # Used for replacing strings in an SWF file
 byteorder = "1"

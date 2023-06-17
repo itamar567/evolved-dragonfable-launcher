@@ -1,3 +1,4 @@
+use std::io::Cursor;
 use crate::config::{PROJECT_DIRS, REMOTE_SERVER_ADDR, REMOTE_SERVER_URL};
 use crate::{encryption, files};
 use crate::server::stream::{StreamBodySender, get_stream_data_blocking};
@@ -6,7 +7,6 @@ use axum::response::{IntoResponse, Response};
 use http::{HeaderMap, StatusCode, Uri};
 use roxmltree::Document;
 use std::sync::mpsc;
-use tokio::fs::File;
 use tokio_util::io::ReaderStream;
 use crate::server::utils::spoof_headers;
 
@@ -51,16 +51,15 @@ where
     if let Ok(doc) = Document::parse(form_data.as_str()) {
         let id = id_extractor(doc);
         let cache_file_path = PROJECT_DIRS.cache_dir().join(dir).join(id);
-        if cache_file_path.exists() {
-            let file = File::open(&cache_file_path).await.unwrap();
-            let stream = ReaderStream::new(file);
+        if let Some(data) = files::read_file(&cache_file_path, true) {
+            let stream = ReaderStream::new(Cursor::new(data));
             let body = StreamBodySender::new(stream, None, Some(url.clone()));
 
             // Send the POST request to the remote server in the background, and update the cache
             tokio::spawn(async move {
                 let remote_server_response = send_post_request_to_url(url, headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
                 if remote_server_response.status() == StatusCode::OK {
-                    files::write_file(&cache_file_path, remote_server_response.bytes().await.unwrap()).unwrap();
+                    files::write_file(&cache_file_path, remote_server_response.bytes().await.unwrap(), true).unwrap();
                 }
             });
 
@@ -80,7 +79,7 @@ where
 
         if status == StatusCode::OK {
             tokio::spawn(async move {
-                files::write_file(&cache_file_path, get_stream_data_blocking(rx)).unwrap();
+                files::write_file(&cache_file_path, get_stream_data_blocking(rx), true).unwrap();
             });
         }
 

@@ -1,4 +1,3 @@
-use std::fs;
 use std::path::PathBuf;
 use crate::config::{PROJECT_DIRS, REMOTE_SERVER_ADDR, REMOTE_SERVER_URL};
 use crate::server::stream::{StreamBodySender, get_stream_data_blocking};
@@ -71,7 +70,7 @@ pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoR
 
     if status == StatusCode::OK {
         tokio::spawn(async move {
-            files::write_file(&cache_file_path, get_stream_data_blocking(rx)).unwrap();
+            files::write_file(&cache_file_path, get_stream_data_blocking(rx), false).unwrap();
         });
     }
 
@@ -85,7 +84,7 @@ pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoR
 pub async fn get_game_swf(path: Uri, headers: HeaderMap, _version: Path<String>) -> impl IntoResponse {
     let cache_file_path = get_cache_file_path(&path);
     if cache_file_path.exists() {
-        if let Ok(bytes) = fs::read(&cache_file_path) {
+        if let Some(bytes) = files::read_file(&cache_file_path, false) {
             return Response::builder()
                 .status(StatusCode::OK)
                 .body(Body::from(bytes))
@@ -106,7 +105,7 @@ pub async fn get_game_swf(path: Uri, headers: HeaderMap, _version: Path<String>)
             modified_bytes = bytes;
         }
 
-        let _ = files::write_file(&cache_file_path, &modified_bytes);
+        let _ = files::write_file(&cache_file_path, &modified_bytes, false);
 
         return Response::builder()
             .status(status)
