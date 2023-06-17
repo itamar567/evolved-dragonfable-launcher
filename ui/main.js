@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, MenuItem } = require("electron")
+const { app, BrowserWindow, Menu, MenuItem, shell } = require("electron")
 const {join} = require("path")
 const express = require("express")
 
@@ -22,6 +22,11 @@ const createWindow = () => {
         },
         autoHideMenuBar: true,
     })
+
+    win.webContents.on("new-window", function(e, url) {
+        e.preventDefault();
+        shell.openExternal(url);
+    });
 
     win.loadFile("index.html")
 
