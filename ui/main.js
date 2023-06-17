@@ -1,5 +1,5 @@
 const { app, BrowserWindow, Menu, MenuItem } = require("electron")
-const {join, basename} = require("path")
+const {join} = require("path")
 const express = require("express")
 
 let pluginName;
