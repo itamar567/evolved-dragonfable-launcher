@@ -2,16 +2,23 @@
     <head>
         <title>Evolved DragonFable Launcher</title>
     </head>
-    <body style="background-color: #660000; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
+    <body style="background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
+            <br>
+            <div style="display: flex; flex-direction: column; align-items: center">
+                <label style="user-select: none">Endgame Wiki</label>
+                <button onclick="window.open('https://dragonfable-endgame.fandom.com/')">Home</button>
+                <button id="endgame_wiki_class_button" style="display: none"></button>
+                <button id="endgame_wiki_challenge_button" style="display: none"></button>
+            </div>
         </div>
 
         <div id="game_container">
             <embed base="http://127.0.0.1:39260/game/" src="http://127.0.0.1:39260/game/DFLoader.swf" id="game" style="flex: 3">
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; color: white">
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <div style="display: flex; flex-direction: column; align-items: center">
                 <label style="user-select: none">Quality</label>
                 <label>
@@ -68,6 +75,9 @@
             let game = document.getElementById("game");
             let game_container = document.getElementById("game_container");
             let quality_slider = document.getElementById("quality_slider");
+
+            let endgame_wiki_class_button = document.getElementById("endgame_wiki_class_button");
+            let endgame_wiki_challenge_button = document.getElementById("endgame_wiki_challenge_button");
 
             let item_select = document.getElementById("item_select");
             let average_item_rate = document.getElementById("average_item_rate");
@@ -294,6 +304,18 @@
                 }
             }
 
+            function setClass(class_name) {
+                endgame_wiki_class_button.style.display = class_name == null ? "none" : "flex";
+                endgame_wiki_class_button.textContent = class_name;
+                endgame_wiki_class_button.onclick = () => window.open(`https://dragonfable-endgame.fandom.com/wiki/${encodeURI(class_name.replace(" ", "_"))}`);
+            }
+
+            function setEndgameChallenge(quest_name) {
+                endgame_wiki_challenge_button.style.display = quest_name == null ? "none" : "flex";
+                endgame_wiki_challenge_button.textContent = quest_name;
+                endgame_wiki_challenge_button.onclick = () => window.open(`https://dragonfable-endgame.fandom.com/wiki/${encodeURI(quest_name.replace(" ", "_"))}`);
+            }
+
             function receiveCharacterData(data) {
                 let json_data = JSON.parse(decodeURIComponent(data));
 
@@ -302,6 +324,14 @@
                 }
                 else {
                     updateItem(json_data);
+                }
+
+                setClass(json_data.class);
+                if (json_data.quest_is_inn_challenge) {
+                    setEndgameChallenge(json_data.quest);
+                }
+                else {
+                    setEndgameChallenge(null);
                 }
             }
         </script>
