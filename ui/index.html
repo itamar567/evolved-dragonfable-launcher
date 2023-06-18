@@ -2,12 +2,12 @@
     <head>
         <title>Evolved DragonFable Launcher</title>
     </head>
-    <body style="background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
+    <body style="user-select: none; background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
             <br>
             <div style="display: flex; flex-direction: column; align-items: center">
-                <label style="user-select: none">Endgame Wiki</label>
+                <label>Endgame Wiki</label>
                 <button onclick="window.open('https://dragonfable-endgame.fandom.com/')">Home</button>
                 <button id="endgame_wiki_class_button" style="display: none"></button>
                 <button id="endgame_wiki_challenge_button" style="display: none"></button>
@@ -20,7 +20,7 @@
 
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <div style="display: flex; flex-direction: column; align-items: center">
-                <label style="user-select: none">Quality</label>
+                <label>Quality</label>
                 <label>
                     <input type="range" min="25" max="100" value="100" onchange="onQualitySliderChange();" id="quality_slider">
                 </label>
@@ -28,7 +28,7 @@
 
             <div id="item_tracker" style="display: none; flex-direction: column; align-items: center">
                 <div style="flex-direction: row">
-                    <label style="user-select: none">Item Tracker</label>
+                    <label>Item Tracker</label>
                     <label>
                         <input type="checkbox" onchange="updateItemTrackerVisibility();" id="item_tracker_checkbox">
                     </label>
@@ -67,7 +67,7 @@
             </div>
 
             <div style="text-align: center">
-                <label style="user-select: none">Press Alt+Enter after clicking in the red areas for fullscreen</label>
+                <label>Press Alt+Enter after clicking in the red areas for fullscreen</label>
             </div>
         </div>
 
