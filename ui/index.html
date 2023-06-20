@@ -18,11 +18,14 @@
 
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <div style="display: flex; flex-direction: column; align-items: center">
-                <label style="font-family: BlackChancery,serif">Quality</label>
+                <label style="font-family: BlackChancery, serif">Quality</label>
                 <label>
                     <input type="range" min="25" max="100" value="100" onchange="onQualitySliderChange();" id="quality_slider">
                 </label>
+                <label id="resolution_label"></label>
             </div>
+
+            <br>
 
             <div id="item_tracker" style="display: none; flex-direction: column; align-items: center">
                 <div style="flex-direction: row">
@@ -64,6 +67,8 @@
                 </div>
             </div>
 
+            <br>
+
             <div style="text-align: center">
                 <label>Press F11 after clicking on the red areas for fullscreen</label>
             </div>
@@ -78,6 +83,7 @@
             let game = document.getElementById("game");
             let game_container = document.getElementById("game_container");
             let quality_slider = document.getElementById("quality_slider");
+            let resolution_label = document.getElementById("resolution_label");
 
             let class_wiki_button = document.getElementById("class_wiki_button");
             let quest_wiki_button = document.getElementById("quest_wiki_button");
@@ -122,6 +128,7 @@
                 game.style.height = quality_slider.value + "%";
                 game.style.marginTop = Math.floor(game.clientHeight * ((1 / quality) - 1) / 2).toString();
                 game.style.marginLeft = Math.floor(game.clientWidth * ((1 / quality) - 1) / 2).toString();
+                resolution_label.textContent = `${game.clientWidth}x${game.clientHeight}`
             }
 
             resize();
