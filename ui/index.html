@@ -349,7 +349,17 @@
                         link.innerText = link.innerText.replace(" (All Versions)", "");
 
                         let split_text = link.innerText.split(", ");
-                        split_text.push(split_text.shift());
+                        let page_name_fix_needed = true;
+                        for (const word of split_text.slice(-1)) {
+                            const lowercased_word = word.toLowerCase();
+                            if (lowercased_word !== "the" && lowercased_word !== "a") {
+                                page_name_fix_needed = false;
+                            }
+                        }
+
+                        if (page_name_fix_needed) {
+                            split_text.unshift(split_text.pop());
+                        }
                         link.innerText = split_text.join(" ");
 
                         variable.push(link);
@@ -363,7 +373,7 @@
             async function getPediaURL(links_array, name) {
                 try {
                     for (const link of links_array) {
-                        if (link.innerText === name) {
+                        if (link.innerText.replace(",", "") === name.replace(",", "")) {
                             return link.href;
                         }
                     }
