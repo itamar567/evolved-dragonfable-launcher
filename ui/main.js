@@ -139,17 +139,10 @@ app.whenReady().then(() => {
             {
                 label: "Fullscreen",
                 role: "togglefullscreen",
-                click: () => {
-                    let win = BrowserWindow.getFocusedWindow();
-                    win.setFullScreen(!win.isFullScreen());
-                }
             },
             {
                 label: "Developer Tools",
                 role: "toggleDevTools",
-                click: () => {
-                    BrowserWindow.getFocusedWindow().webContents.toggleDevTools();
-                }
             }
         ]
     }))
