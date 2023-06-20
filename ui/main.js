@@ -53,16 +53,16 @@ app.whenReady().then(() => {
         label: "Electron",
         submenu: [
             {
-                role: "Fullscreen",
-                accelerator: "Alt+Enter",
+                label: "Fullscreen",
+                role: "togglefullscreen",
                 click: () => {
                     let win = BrowserWindow.getFocusedWindow();
                     win.setFullScreen(!win.isFullScreen());
                 }
             },
             {
-                role: "Developer Tools",
-                accelerator: "Ctrl+Shift+I",
+                label: "Developer Tools",
+                role: "toggleDevTools",
                 click: () => {
                     BrowserWindow.getFocusedWindow().webContents.toggleDevTools();
                 }
