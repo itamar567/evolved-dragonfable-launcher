@@ -70,6 +70,11 @@
         </div>
 
         <script>
+            console.log(window.localStorage.getItem("skip_warning"));
+            if (!window.localStorage.getItem("skip_warning")) {
+                location.href = "warning.html";
+            }
+
             let game = document.getElementById("game");
             let game_container = document.getElementById("game_container");
             let quality_slider = document.getElementById("quality_slider");

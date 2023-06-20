@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Evolved DragonFable Launcher</title>
+    </head>
+    <body style="user-select: none; background-color: #660000; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center">
+        <h1>Disclaimer</h1>
+        <h3>This This is a 3rd party launcher that is not supported nor endorsed by Artix Entertainment</h3>
+        <h4>By clicking 'Continue', you agree to use this launcher at your own risk.</h4>
+        <button onclick="continue_to_launcher()">Continue</button>
+        <script>
+            function continue_to_launcher() {
+                window.localStorage.setItem("skip_warning", "true");
+                location.href = "index.html";
+            }
+        </script>
+    </body>
+</html>
