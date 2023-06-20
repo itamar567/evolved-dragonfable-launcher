@@ -4,9 +4,9 @@
   "description": "A custom DragonFable launcher with fast loading times",
   "main": "main.js",
   "scripts": {
-    "build-linux": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=linux --arch=x64 --out=out",
-    "build-win": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=win32 --arch=x64 --out=out",
-    "build-mac": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=darwin --arch=x64 --out=out"
+    "build-linux": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=linux --arch=x64 --out=out --icon ../assets/icon.ico",
+    "build-win": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=win32 --arch=x64 --out=out --icon ../assets/icon.ico",
+    "build-mac": "./node_modules/electron-packager/bin/electron-packager.js . --overwrite --platform=darwin --arch=x64 --out=out --icon ../assets/icon.ico"
   },
   "author": "itmr",
   "dependencies": {
