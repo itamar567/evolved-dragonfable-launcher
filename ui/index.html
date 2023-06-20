@@ -381,6 +381,11 @@
                     return;
                 }
 
+                // Fix Carnax links
+                if (name === "Carnax" || name === "Carnax (Extreme)") {
+                    name = "Carnax Gauntlet";
+                }
+
                 if (await checkIfEndgameWikiPageExists(name)) {
                     button.textContent = name;
                     button.style.display = "flex";
