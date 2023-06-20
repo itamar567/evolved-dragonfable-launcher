@@ -2,6 +2,8 @@
 
 set -e
 
+pkill evolved-dragonf
+
 cd core
 cargo build
 cargo run &
