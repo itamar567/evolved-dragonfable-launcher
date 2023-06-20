@@ -3,6 +3,7 @@ use roxmltree::{Document, Node};
 use serde::{Deserialize, Serialize, Serializer};
 use serde::ser::SerializeStruct;
 use crate::config::REMOTE_SERVER_URL;
+use crate::encryption::decrypt;
 use crate::REQWEST_CLIENT;
 
 static mut CHARACTER: Option<Character> = None;
@@ -23,8 +24,6 @@ struct Character {
     bank: Vec<Item>,
 
     quest: Option<String>,
-    quest_is_inn_challenge: bool,
-
     current_quest_reward: Option<Item>,
 }
 
@@ -36,7 +35,6 @@ impl Character {
             inventory: Vec::new(),
             bank: Vec::new(),
             quest: None,
-            quest_is_inn_challenge: false,
             current_quest_reward: None,
         }
     }
@@ -52,7 +50,6 @@ impl Serialize for Character {
         character.serialize_field("all_items", &all_items)?;
         character.serialize_field("class", &self.class)?;
         character.serialize_field("quest", &self.quest)?;
-        character.serialize_field("quest_is_inn_challenge", &self.quest_is_inn_challenge)?;
 
         character.end()
     }
@@ -70,6 +67,7 @@ pub async fn parse_post_request(data: &str, path: &str) {
         "/game/cf-bankload.asp" => character.unwrap().parse_bank_load(data),
         "/game/cf-questcomplete-Mar2011.asp" => character.unwrap().parse_quest_complete(data),
         "/game/cf-classload.asp" => character.unwrap().parse_class_load(data),
+        "/game/cf-expsave.asp" => character.unwrap().parse_xp_save(data),
         "/game/cf-questreward.asp" => character.unwrap().parse_quest_reward(),
         _ => return,
     }
@@ -124,14 +122,25 @@ fn parse_character_load(data: &str) {
 }
 
 impl Character {
+    fn parse_xp_save(&mut self, data: &str) {
+        let encrypted_doc = Document::parse(data).unwrap();
+        let decrypted_data = decrypt(encrypted_doc.root_element().text().unwrap()).unwrap();
+        let doc = Document::parse(decrypted_data.as_str()).unwrap();
+
+        let quest_reward_node = doc.root_element().children().find(|node| node.tag_name().name() == "questreward").unwrap();
+        let current_xp = quest_reward_node.attributes().find(|att| att.name() == "intExp").unwrap().value();
+
+        if current_xp != "0" {
+            self.quest = None;
+        }
+    }
+
     fn parse_quest_load(&mut self, data: &str) {
         let doc = Document::parse(data).unwrap();
         let quest_node = doc.root_element().children().find(|node| node.tag_name().name() == "quest").unwrap();
         let quest_name = quest_node.attributes().find(|att| att.name() == "strName").unwrap().value();
-        let quest_file_path = quest_node.attributes().find(|att| att.name() == "strFileName").unwrap().value();
 
         self.quest = Some(quest_name.to_string());
-        self.quest_is_inn_challenge = quest_file_path.starts_with("towns/TimeArena/");
     }
 
     fn parse_bank_load(&mut self, data: &str) {
@@ -183,7 +192,6 @@ impl Character {
         let item_node = quest_reward_node.children().find(|node| node.tag_name().name() == "items").unwrap();
 
         self.quest = None;
-        self.quest_is_inn_challenge = false;
         self.current_quest_reward = parse_item_node(item_node);
     }
 

@@ -5,12 +5,9 @@
     <body style="user-select: none; background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
         <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
             <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
-            <br>
             <div style="display: flex; flex-direction: column; align-items: center">
-                <label>Endgame Wiki</label>
-                <button onclick="window.open('https://dragonfable-endgame.fandom.com/')">Home</button>
-                <button id="endgame_wiki_class_button" style="display: none"></button>
-                <button id="endgame_wiki_challenge_button" style="display: none"></button>
+                <button id="class_wiki_button" style="display: none"></button>
+                <button id="quest_wiki_button" style="display: none"></button>
             </div>
         </div>
 
@@ -76,8 +73,8 @@
             let game_container = document.getElementById("game_container");
             let quality_slider = document.getElementById("quality_slider");
 
-            let endgame_wiki_class_button = document.getElementById("endgame_wiki_class_button");
-            let endgame_wiki_challenge_button = document.getElementById("endgame_wiki_challenge_button");
+            let class_wiki_button = document.getElementById("class_wiki_button");
+            let quest_wiki_button = document.getElementById("quest_wiki_button");
 
             let item_select = document.getElementById("item_select");
             let average_item_rate = document.getElementById("average_item_rate");
@@ -304,16 +301,88 @@
                 }
             }
 
-            function setClass(class_name) {
-                endgame_wiki_class_button.style.display = class_name == null ? "none" : "flex";
-                endgame_wiki_class_button.textContent = class_name;
-                endgame_wiki_class_button.onclick = () => window.open(`https://dragonfable-endgame.fandom.com/wiki/${encodeURI(class_name)}`);
+            async function checkIfEndgameWikiPageExists(page_name) {
+                let cached_value = endgame_wiki_pages_cache[page_name];
+                if (cached_value != null) {
+                    return cached_value;
+                }
+
+                let url = `https://dragonfable-endgame.fandom.com/wiki/${encodeURI(page_name)}`;
+
+                return await fetch(url)
+                    .then(response => {
+                        endgame_wiki_pages_cache[page_name] = response.ok;
+                        return response.ok;
+                    })
+                    .catch(_ => false);
             }
 
-            function setEndgameChallenge(quest_name) {
-                endgame_wiki_challenge_button.style.display = quest_name == null ? "none" : "flex";
-                endgame_wiki_challenge_button.textContent = quest_name;
-                endgame_wiki_challenge_button.onclick = () => window.open(`https://dragonfable-endgame.fandom.com/wiki/${encodeURI(quest_name)}`);
+            let pedia_location_links = [];
+            let pedia_class_links = [];
+            let endgame_wiki_pages_cache = {};
+
+            async function initPediaLinks(variable, url) {
+                const response = await fetch(url);
+                const html = await response.text();
+
+                const tmp = document.createElement("div");
+                tmp.innerHTML = html;
+
+                const messages = tmp.getElementsByClassName("msg");
+
+                for (const message of messages) {
+                    const links_in_url = message.getElementsByTagName("a");
+                    for (const link of links_in_url) {
+                        link.innerText = link.innerText.replace(" (All Versions)", "");
+
+                        let split_text = link.innerText.split(", ");
+                        split_text.push(split_text.shift());
+                        link.innerText = split_text.join(" ");
+
+                        variable.push(link);
+                    }
+                }
+            }
+
+            initPediaLinks(pedia_location_links, "https://forums2.battleon.com/f/tm.asp?m=21889325");
+            initPediaLinks(pedia_class_links, "https://forums2.battleon.com/f/tm.asp?m=22303573");
+
+            async function getPediaURL(links_array, name) {
+                try {
+                    for (const link of links_array) {
+                        if (link.innerText === name) {
+                            return link.href;
+                        }
+                    }
+
+                    return null;
+                } catch (_) {
+                    return null;
+                }
+            }
+
+            async function setWikiButton(button, pedia_links_array, name) {
+                if (name == null) {
+                    button.style.display = "none";
+                    return;
+                }
+
+                if (await checkIfEndgameWikiPageExists(name)) {
+                    button.textContent = name;
+                    button.style.display = "flex";
+                    button.onclick = () => window.open(`https://dragonfable-endgame.fandom.com/wiki/${encodeURI(name)}`);
+                }
+                else {
+                    const pedia_url = await getPediaURL(pedia_links_array, name);
+                    if (pedia_url == null) {
+                        button.style.display = "none";
+                        return;
+                    }
+
+                    button.textContent = name;
+                    button.style.display = "flex";
+                    button.onclick = () => window.open(pedia_url);
+                }
             }
 
             function receiveCharacterData(data) {
@@ -326,13 +395,8 @@
                     updateItem(json_data);
                 }
 
-                setClass(json_data.class);
-                if (json_data.quest_is_inn_challenge) {
-                    setEndgameChallenge(json_data.quest);
-                }
-                else {
-                    setEndgameChallenge(null);
-                }
+                setWikiButton(class_wiki_button, pedia_class_links, json_data.class);
+                setWikiButton(quest_wiki_button, pedia_location_links, json_data.quest);
             }
         </script>
     </body>
