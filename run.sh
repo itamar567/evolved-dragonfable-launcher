@@ -2,7 +2,7 @@
 
 set -e
 
-pkill evolved-dragonf
+pkill evolved-dragonf || true
 
 cd core
 cargo build
