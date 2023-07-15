@@ -1,17 +1,17 @@
-use std::path::PathBuf;
 use crate::config::{PROJECT_DIRS, REMOTE_SERVER_ADDR, REMOTE_SERVER_URL};
-use crate::server::stream::{StreamBodySender, get_stream_data_blocking};
+use crate::files;
+use crate::server::stream::{get_stream_data_blocking, StreamBodySender};
 use crate::server::utils;
+use crate::server::utils::spoof_headers;
 use crate::REQWEST_CLIENT;
 use axum::body::Body;
+use axum::extract::Path;
 use axum::response::{IntoResponse, Response};
 use http::{HeaderMap, StatusCode, Uri};
+use std::path::PathBuf;
 use std::sync::mpsc;
-use axum::extract::Path;
 use tokio::fs::File;
 use tokio_util::io::ReaderStream;
-use crate::server::utils::spoof_headers;
-use crate::files;
 
 async fn send_get_request(path: &Uri, headers: HeaderMap) -> reqwest::Response {
     let request_headers = spoof_headers(headers, REMOTE_SERVER_URL, REMOTE_SERVER_ADDR);
@@ -29,7 +29,11 @@ pub async fn unhandled_get_request(path: Uri, headers: HeaderMap) -> impl IntoRe
 
     Response::builder()
         .status(remote_server_response.status())
-        .body(StreamBodySender::new(remote_server_response.bytes_stream(), None, None))
+        .body(StreamBodySender::new(
+            remote_server_response.bytes_stream(),
+            None,
+            None,
+        ))
         .unwrap()
 }
 
@@ -45,11 +49,13 @@ async fn get_cached_request(cache_file_path: &PathBuf) -> Option<Response> {
         let stream = ReaderStream::new(file);
         let body = StreamBodySender::new(stream, None, None);
 
-        return Some(Response::builder()
-            .status(StatusCode::OK)
-            .body(body)
-            .unwrap()
-            .into_response());
+        return Some(
+            Response::builder()
+                .status(StatusCode::OK)
+                .body(body)
+                .unwrap()
+                .into_response(),
+        );
     }
 
     None
@@ -58,7 +64,7 @@ async fn get_cached_request(cache_file_path: &PathBuf) -> Option<Response> {
 pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoResponse {
     let cache_file_path = get_cache_file_path(&path);
     if let Some(response) = get_cached_request(&cache_file_path).await {
-        return response
+        return response;
     }
 
     let remote_server_response = send_get_request(&path, headers).await;
@@ -70,7 +76,7 @@ pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoR
 
     if status == StatusCode::OK {
         tokio::spawn(async move {
-            files::write_file(&cache_file_path, get_stream_data_blocking(rx), false).unwrap();
+            files::write_file(&cache_file_path, get_stream_data_blocking(rx), false, true).unwrap();
         });
     }
 
@@ -81,7 +87,11 @@ pub async fn get_request_with_cache(path: Uri, headers: HeaderMap) -> impl IntoR
         .into_response()
 }
 
-pub async fn get_game_swf(path: Uri, headers: HeaderMap, _version: Path<String>) -> impl IntoResponse {
+pub async fn get_game_swf(
+    path: Uri,
+    headers: HeaderMap,
+    _version: Path<String>,
+) -> impl IntoResponse {
     let cache_file_path = get_cache_file_path(&path);
     if cache_file_path.exists() {
         if let Some(bytes) = files::read_file(&cache_file_path, false) {
@@ -105,7 +115,7 @@ pub async fn get_game_swf(path: Uri, headers: HeaderMap, _version: Path<String>)
             modified_bytes = bytes;
         }
 
-        let _ = files::write_file(&cache_file_path, &modified_bytes, false);
+        let _ = files::write_file(&cache_file_path, &modified_bytes, false, false);
 
         return Response::builder()
             .status(status)

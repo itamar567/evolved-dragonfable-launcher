@@ -59,7 +59,7 @@ where
             tokio::spawn(async move {
                 let remote_server_response = send_post_request_to_url(url, headers, form, remote_server_url.as_str(), remote_server_addr.as_str()).await;
                 if remote_server_response.status() == StatusCode::OK {
-                    files::write_file(&cache_file_path, remote_server_response.bytes().await.unwrap(), true).unwrap();
+                    files::write_file(&cache_file_path, remote_server_response.bytes().await.unwrap(), true, true).unwrap();
                 }
             });
 
@@ -79,7 +79,7 @@ where
 
         if status == StatusCode::OK {
             tokio::spawn(async move {
-                files::write_file(&cache_file_path, get_stream_data_blocking(rx), true).unwrap();
+                files::write_file(&cache_file_path, get_stream_data_blocking(rx), true, true).unwrap();
             });
         }
 
