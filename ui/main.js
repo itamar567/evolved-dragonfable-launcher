@@ -41,11 +41,12 @@ if (!existsSync(writable_root_path)) {
     let flash_player_dir;
     if (process.platform === "linux") {
         flash_player_dir = join(homedir(), ".macromedia/Flash_Player");
+        external_apps_writable_root_paths.push(flash_player_dir, );
     }
-    else {
+    else if (process.platform === "win"){
         flash_player_dir = join(process.env.APPDATA, "Macromedia/Flash Player");
+        external_apps_writable_root_paths.push(flash_player_dir, );
     }
-    external_apps_writable_root_paths.push(flash_player_dir, );
 
     // Try to copy data from the official launcher
     external_apps_writable_root_paths.push(writable_root_path.replace("evolved-dragonfable-launcher", "Artix Game Launcher"));
@@ -89,10 +90,13 @@ if (!existsSync(writable_root_path)) {
 let pluginName;
 
 if (process.platform === "linux") {
-    pluginName = "plugins/libpepflashplayer.so";
+  pluginName = "plugins/libpepflashplayer.so";
+}
+else if (process.platform === "win"){
+  pluginName = "plugins/pepflashplayer.dll";
 }
 else {
-    pluginName = "plugins/pepflashplayer.dll";
+  pluginName = "plugins/PepperFlashPlayer";
 }
 
 app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, pluginName))
