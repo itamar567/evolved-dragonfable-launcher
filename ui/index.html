@@ -153,10 +153,11 @@
 
             function clearCache() {
                 fetch("http://127.0.0.1:39621/clear_cache")
-                clear_cache_button.style.display = "none"
+                clear_cache_button.disabled = true
                 clear_cache_text.style.display = "flex"
                 
                 setTimeout(() => {
+                    clear_cache_button.disabled = false
                     clear_cache_text.style.display = "none"
                 }, 3000)
             }
