@@ -1,9 +1,23 @@
-const { app, BrowserWindow, Menu, MenuItem, shell } = require("electron")
+const { app, BrowserWindow, Menu, MenuItem, shell, session } = require("electron")
 const {join, sep, isAbsolute, resolve, dirname} = require("path")
 const express = require("express")
-const {existsSync, mkdirSync, readdirSync} = require("fs");
+const {existsSync, mkdirSync, readdirSync, rmdirSync, unlinkSync, lstatSync} = require("fs");
 const {copySync} = require("fs-extra/lib/copy");
 const {homedir} = require("os");
+
+function deleteFolderRecursive(directoryPath) {
+    if (existsSync(directoryPath)) {
+      readdirSync(directoryPath).forEach((file, index) => {
+        const curPath = join(directoryPath, file);
+        if (lstatSync(curPath).isDirectory()) {
+          deleteFolderRecursive(curPath);
+        } else {
+          unlinkSync(curPath);
+        }
+      });
+      rmdirSync(directoryPath);
+    }
+}
 
 function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
     const initDir = isAbsolute(targetDir) ? sep : '';
@@ -87,19 +101,24 @@ if (!existsSync(writable_root_path)) {
 
 
 let pluginName;
+let cacheDir;
 
 if (process.platform === "linux") {
     pluginName = "plugins/libpepflashplayer.so";
+    cacheDir = process.env.XDG_CACHE_HOME + "/evolved-dragonfable-launcher"
 }
 else {
     pluginName = "plugins/pepflashplayer.dll";
+    cacheDir = "%APPDATA%\\..\\Local\\itmr\\Evolved-DragonFable-Launcher\\cache"
 }
 
 app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, pluginName))
 app.commandLine.appendSwitch("ppapi-flash-version", "32.0.0.371");
 
+let win
+
 const createWindow = () => {
-    const win = new BrowserWindow({
+    win = new BrowserWindow({
         webPreferences: {
             plugins: true,
             nodeIntegration: false,
@@ -122,6 +141,12 @@ const createWindow = () => {
         res.send("")
     })
 
+    app.get("/clear_cache", (req, res) => {
+      session.defaultSession.clearCache(() => {})
+      deleteFolderRecursive(cacheDir)
+      res.send("")
+    })
+
     app.listen(39621, "127.0.0.1", () => {})
 }
 
@@ -138,7 +163,15 @@ app.whenReady().then(() => {
         submenu: [
             {
                 label: "Fullscreen",
-                role: "togglefullscreen",
+                click: () => {
+                    win.webContents.executeJavaScript("toggleFullscreen()", true)
+                }
+            },
+            {
+                label: "Zen Mode",
+                click: () => {
+                    win.webContents.executeJavaScript("toggleZenMode()")
+                }
             },
             {
                 label: "Developer Tools",

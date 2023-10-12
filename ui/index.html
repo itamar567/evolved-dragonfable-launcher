@@ -3,13 +3,22 @@
         <meta charset="UTF-8">
         <title>Evolved DragonFable Launcher</title>
         <link href="https://fonts.cdnfonts.com/css/black-chancery" rel="stylesheet">
+        <style>
+          button {
+            background-image: "button.png";
+            background-size: cover;
+            background-position: center center;
+          }
+        </style>
     </head>
     <body style="user-select: none; background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
-            <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
-            <div style="display: flex; flex-direction: column; align-items: center">
-                <button id="class_wiki_button" style="display: none"></button>
-                <button id="quest_wiki_button" style="display: none"></button>
+        <div style="flex: 1">
+            <div id="left_panel" style="display: flex; flex-direction: column; align-items: center">
+                <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
+                <div style="display: flex; flex-direction: column; align-items: center">
+                    <button id="class_wiki_button" style="display: none"></button>
+                    <button id="quest_wiki_button" style="display: none"></button>
+                </div>
             </div>
         </div>
 
@@ -17,61 +26,77 @@
             <embed base="http://127.0.0.1:39260/game/" src="http://127.0.0.1:39260/game/DFLoader.swf" id="game" style="flex: 3">
         </div>
 
-        <div style="flex: 1; display: flex; flex-direction: column; align-items: center">
-            <div style="display: flex; flex-direction: column; align-items: center">
-                <label style="font-family: BlackChancery, serif">Quality</label>
-                <label>
-                    <input type="range" min="25" max="100" value="100" onchange="onQualitySliderChange();" id="quality_slider">
-                </label>
-                <label id="resolution_label"></label>
-            </div>
-
-            <br>
-
-            <div id="item_tracker" style="display: none; flex-direction: column; align-items: center">
-                <div style="flex-direction: row">
-                    <label style="font-family: BlackChancery, serif">Item Tracker</label>
+        <div style="flex: 1">
+            <div id="right_panel" style="flex: 1; display: flex; flex-direction: column; align-items: center">
+                <div style="display: flex; flex-direction: column; align-items: center">
+                    <label style="font-family: BlackChancery, serif">Quality</label>
                     <label>
-                        <input type="checkbox" onchange="updateItemTrackerVisibility();" id="item_tracker_checkbox">
+                        <input type="range" min="25" max="100" value="100" onchange="onQualitySliderChange();" id="quality_slider">
                     </label>
+                    <label id="resolution_label"></label>
                 </div>
-                <div id="item_tracker_content_container" style="display: none; flex-direction: column; align-items: center">
-                    <label>
-                        <select id="item_select" onchange="onItemSelect();"></select>
-                    </label>
-                    <div>
-                        <label>Current amount:&nbsp;</label>
-                        <label id="current_item_count"></label>
-                        <br>
+    
+                <br>
+    
+                <div id="item_tracker" style="display: none; flex-direction: column; align-items: center">
+                    <div style="flex-direction: row">
+                        <label style="font-family: BlackChancery, serif">Item Tracker</label>
+                        <label>
+                            <input type="checkbox" onchange="updateItemTrackerVisibility();" id="item_tracker_checkbox">
+                        </label>
                     </div>
-                    <div id="goal_stats_container" style="display: none; flex-direction: column; align-items: center">
-                        <div style="flex-direction: row">
-                            <label>Items left:&nbsp;</label>
-                            <label id="items_left_for_goal"></label>
+                    <div id="item_tracker_content_container" style="display: none; flex-direction: column; align-items: center">
+                        <label>
+                            <select id="item_select" onchange="onItemSelect();"></select>
+                        </label>
+                        <div>
+                            <label>Current amount:&nbsp;</label>
+                            <label id="current_item_count"></label>
                             <br>
                         </div>
-                        <div id="estimated_time_until_goal_container" style="display: none; flex-direction: column; align-items: center">
-                            <label>Estimated time:&nbsp;</label>
-                            <label id="estimated_time_until_goal"></label>
+                        <div id="goal_stats_container" style="display: none; flex-direction: column; align-items: center">
+                            <div style="flex-direction: row">
+                                <label>Items left:&nbsp;</label>
+                                <label id="items_left_for_goal"></label>
+                                <br>
+                            </div>
+                            <div id="estimated_time_until_goal_container" style="display: none; flex-direction: column; align-items: center">
+                                <label>Estimated time:&nbsp;</label>
+                                <label id="estimated_time_until_goal"></label>
+                            </div>
                         </div>
+                        <div id="average_item_rate_container" style="display: none; flex-direction: row; align-items: center">
+                            <label>Average:&nbsp;</label>
+                            <label id="average_item_rate">0.00</label>
+                            <label>&nbsp;per minute</label>
+                            <br>
+                        </div>
+                        <label>
+                            Goal:&nbsp;<input type="number" id="goal" onchange="updateItemTracking(false)">
+                        </label>
+                        <button id="toggle_button" onclick="toggleTimer()">Start</button>
                     </div>
-                    <div id="average_item_rate_container" style="display: none; flex-direction: row; align-items: center">
-                        <label>Average:&nbsp;</label>
-                        <label id="average_item_rate">0.00</label>
-                        <label>&nbsp;per minute</label>
-                        <br>
-                    </div>
-                    <label>
-                        Goal:&nbsp;<input type="number" id="goal" onchange="updateItemTracking(false)">
-                    </label>
-                    <button id="toggle_button" onclick="toggleTimer()">Start</button>
+          
+
+                    <br>
                 </div>
-            </div>
+    
+                <button onclick="toggleFullscreen()">Toggle Fullscreen (F11)</button>
+    
+                <br>
+    
+                <button onclick="toggleZenMode()">Enable Zen Mode (F10)</button>
+    
+                <br>
+    
+                <button id="clear_cache_button" onclick="clearCache()">Clear Cache</button>
+                <div id="clear_cache_text" style="text-align: center; display: none">
+                    <label>Cache cleared!</label>
+                </div>
 
-            <br>
+                <br>
 
-            <div style="text-align: center">
-                <label>Press F11 after clicking on the red areas for fullscreen</label>
+                <a id="new_version_link" style="display: none; color: aqua; text-align: center">A new version is available!</a>
             </div>
         </div>
 
@@ -88,6 +113,12 @@
             let class_wiki_button = document.getElementById("class_wiki_button");
             let quest_wiki_button = document.getElementById("quest_wiki_button");
 
+            let left_panel = document.getElementById("left_panel");
+            let right_panel = document.getElementById("right_panel");
+
+            let clear_cache_button = document.getElementById("clear_cache_button");
+            let clear_cache_text = document.getElementById("clear_cache_text");
+
             let item_select = document.getElementById("item_select");
             let average_item_rate = document.getElementById("average_item_rate");
             let average_item_rate_container = document.getElementById("average_item_rate_container");
@@ -103,16 +134,56 @@
             let item_tracker_content_container = document.getElementById("item_tracker_content_container");
             let item_tracker_checkbox = document.getElementById("item_tracker_checkbox");
 
+            let new_version_link = document.getElementById("new_version_link");
+
             let saved_quality_slider_value = window.localStorage.getItem("quality_slider_value");
             if (saved_quality_slider_value) {
                 quality_slider.value = saved_quality_slider_value;
             }
 
-            function updateItemTrackerVisibility() {
-                item_tracker_content_container.style.display = item_tracker_checkbox.checked ? "flex" : "none";
-                if (!item_tracker_checkbox.checked) {
-                    resetItemTracking();
+            document.addEventListener("keydown", (event) => {
+              if (event.keyCode == 121) {
+                  // Toggle zen mode on F10
+                  toggleZenMode(false)
+              } else if (event.keyCode == 122) {
+                  // Toggle fullscreen on F11
+                  toggleFullscreen()
+              }
+            }, false)
+
+            function clearCache() {
+                fetch("http://127.0.0.1:39621/clear_cache")
+                clear_cache_button.style.display = "none"
+                clear_cache_text.style.display = "flex"
+                
+                setTimeout(() => {
+                    clear_cache_text.style.display = "none"
+                }, 3000)
+            }
+
+            function toggleFullscreen() {
+                if (document.webkitFullscreenElement) {
+                    document.webkitExitFullscreen()
+                } else {
+                    document.documentElement.webkitRequestFullscreen()
                 }
+            }
+
+            function toggleZenMode() {
+                if (right_panel.style.display != "none") {
+                    right_panel.style.display = "none"
+                    left_panel.style.display = "none"
+                } else {
+                    right_panel.style.display = "flex"
+                    left_panel.style.display = "flex"
+                }
+
+                resize()
+            }
+
+            function updateItemTrackerVisibility() {
+                onItemSelect()
+                item_tracker_content_container.style.display = item_tracker_checkbox.checked ? "flex" : "none";
             }
 
             function onQualitySliderChange() {
@@ -322,7 +393,7 @@
 
                 let url = `https://dragonfable-endgame.fandom.com/wiki/${encodeURI(page_name)}`;
 
-                return await fetch(url)
+              return await fetch(url, {credentials: "omit"})
                     .then(response => {
                         endgame_wiki_pages_cache[page_name] = response.ok;
                         return response.ok;
@@ -335,7 +406,7 @@
             let endgame_wiki_pages_cache = {};
 
             async function initPediaLinks(variable, url) {
-                const response = await fetch(url);
+              const response = await fetch(url, {credentials: "omit"});
                 const html = await response.text();
 
                 const tmp = document.createElement("div");
@@ -426,6 +497,68 @@
                 setWikiButton(class_wiki_button, pedia_class_links, json_data.class);
                 setWikiButton(quest_wiki_button, pedia_location_links, json_data.quest);
             }
+
+            function versionCompare(v1, v2, options) {
+                var lexicographical = options && options.lexicographical,
+                    zeroExtend = options && options.zeroExtend,
+                    v1parts = v1.split('.'),
+                    v2parts = v2.split('.');
+            
+                function isValidPart(x) {
+                    return (lexicographical ? /^\d+[A-Za-z]*$/ : /^\d+$/).test(x);
+                }
+            
+                if (!v1parts.every(isValidPart) || !v2parts.every(isValidPart)) {
+                    return NaN;
+                }
+            
+                if (zeroExtend) {
+                    while (v1parts.length < v2parts.length) v1parts.push("0");
+                    while (v2parts.length < v1parts.length) v2parts.push("0");
+                }
+            
+                if (!lexicographical) {
+                    v1parts = v1parts.map(Number);
+                    v2parts = v2parts.map(Number);
+                }
+            
+                for (var i = 0; i < v1parts.length; ++i) {
+                    if (v2parts.length == i) {
+                        return 1;
+                    }
+            
+                    if (v1parts[i] == v2parts[i]) {
+                        continue;
+                    }
+                    else if (v1parts[i] > v2parts[i]) {
+                        return 1;
+                    }
+                    else {
+                        return -1;
+                    }
+                }
+
+                if (v1parts.length != v2parts.length) {
+                    return -1;
+                }
+            
+                return 0;
+            }
+
+            let version_data;
+            async function check_version() {
+                const response = await fetch("https://api.github.com/repos/itamar567/evolved-dragonfable-launcher/releases/latest", {credentials: "omit"})
+                version_data = await response.json()
+    
+                
+                if (versionCompare("1.1.0", version_data["tag_name"].substring(1)) < 0) {
+                    new_version_link.style.display = "flex"
+                    new_version_link.href = "https://github.com/itamar567/evolved-dragonfable-launcher/releases/latest"
+                    new_version_link.target = "_blank"
+                }
+            }
+
+            check_version()
         </script>
     </body>
 </html>

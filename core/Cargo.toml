@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 directories = "5"
 dashmap = { version = "5", features = ["serde"] }
+anyhow = "1"
 
 # Futures and async
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

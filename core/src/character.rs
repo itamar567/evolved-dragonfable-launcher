@@ -1,10 +1,10 @@
-use std::str::FromStr;
-use roxmltree::{Document, Node};
-use serde::{Deserialize, Serialize, Serializer};
-use serde::ser::SerializeStruct;
 use crate::config::REMOTE_SERVER_URL;
 use crate::encryption::decrypt;
 use crate::REQWEST_CLIENT;
+use roxmltree::{Document, Node};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Serialize, Serializer};
+use std::str::FromStr;
 
 static mut CHARACTER: Option<Character> = None;
 
@@ -41,7 +41,10 @@ impl Character {
 }
 
 impl Serialize for Character {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         let mut all_items = self.inventory.clone();
         all_items.extend(self.bank.clone().into_iter());
 
@@ -73,16 +76,38 @@ pub async fn parse_post_request(data: &str, path: &str) {
     }
 
     unsafe {
-        REQWEST_CLIENT.post("http://127.0.0.1:39621/character").json(&CHARACTER.clone()).send().await.unwrap();
+        REQWEST_CLIENT
+            .post("http://127.0.0.1:39621/character")
+            .json(&CHARACTER.clone())
+            .send()
+            .await
+            .unwrap();
     }
 }
 
 fn parse_item_node(item: Node) -> Option<Item> {
-    if let Some(name) = item.attributes().find(|att| att.name() == "strItemName").map(|att| att.value()) {
-        let amount = item.attributes().find(|att| att.name() == "intCount").map(|att| u32::from_str(att.value())).unwrap_or(Ok(1)).unwrap_or(1);
-        if let Some(item_id) = item.attributes().find(|att| att.name() == "ItemID").map(|att| att.value()) {
+    if let Some(name) = item
+        .attributes()
+        .find(|att| att.name() == "strItemName")
+        .map(|att| att.value())
+    {
+        let amount = item
+            .attributes()
+            .find(|att| att.name() == "intCount")
+            .map(|att| u32::from_str(att.value()))
+            .unwrap_or(Ok(1))
+            .unwrap_or(1);
+        if let Some(item_id) = item
+            .attributes()
+            .find(|att| att.name() == "ItemID")
+            .map(|att| att.value())
+        {
             let max_item_amount;
-            if let Some(Ok(item_amount)) = item.attributes().find(|att| att.name() == "intMaxStackSize").map(|att| u32::from_str(att.value())) {
+            if let Some(Ok(item_amount)) = item
+                .attributes()
+                .find(|att| att.name() == "intMaxStackSize")
+                .map(|att| u32::from_str(att.value()))
+            {
                 max_item_amount = item_amount;
             } else {
                 max_item_amount = 1;
@@ -104,20 +129,35 @@ fn parse_character_load(data: &str) {
     let doc = Document::parse(data).unwrap();
     let root = doc.root_element();
 
-    let character_node = root.children().find(|node| node.tag_name().name() == "character").unwrap();
-    let char_id = character_node.attributes().find(|att| att.name() == "CharID").unwrap().value();
-    let class_name = character_node.attributes().find(|att| att.name() == "strClassName").unwrap().value();
-    let items: Vec<Node> = character_node.children().filter(|node| node.tag_name().name() == "items").collect();
+    if let Some(character_node) = root
+        .children()
+        .find(|node| node.tag_name().name() == "character")
+    {
+        let char_id = character_node
+            .attributes()
+            .find(|att| att.name() == "CharID")
+            .unwrap()
+            .value();
+        let class_name = character_node
+            .attributes()
+            .find(|att| att.name() == "strClassName")
+            .unwrap()
+            .value();
+        let items: Vec<Node> = character_node
+            .children()
+            .filter(|node| node.tag_name().name() == "items")
+            .collect();
 
-    let mut character = Character::new(char_id.to_string(), class_name.to_string());
+        let mut character = Character::new(char_id.to_string(), class_name.to_string());
 
-    for item in items {
-        if let Some(item) = parse_item_node(item) {
-            character.inventory.push(item);
+        for item in items {
+            if let Some(item) = parse_item_node(item) {
+                character.inventory.push(item);
+            }
         }
-    }
-    unsafe {
-        CHARACTER = Some(character);
+        unsafe {
+            CHARACTER = Some(character);
+        }
     }
 }
 
@@ -127,8 +167,16 @@ impl Character {
         let decrypted_data = decrypt(encrypted_doc.root_element().text().unwrap()).unwrap();
         let doc = Document::parse(decrypted_data.as_str()).unwrap();
 
-        let quest_reward_node = doc.root_element().children().find(|node| node.tag_name().name() == "questreward").unwrap();
-        let current_xp = quest_reward_node.attributes().find(|att| att.name() == "intExp").unwrap().value();
+        let quest_reward_node = doc
+            .root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "questreward")
+            .unwrap();
+        let current_xp = quest_reward_node
+            .attributes()
+            .find(|att| att.name() == "intExp")
+            .unwrap()
+            .value();
 
         if current_xp != "0" {
             self.quest = None;
@@ -137,8 +185,16 @@ impl Character {
 
     fn parse_quest_load(&mut self, data: &str) {
         let doc = Document::parse(data).unwrap();
-        let quest_node = doc.root_element().children().find(|node| node.tag_name().name() == "quest").unwrap();
-        let quest_name = quest_node.attributes().find(|att| att.name() == "strName").unwrap().value();
+        let quest_node = doc
+            .root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "quest")
+            .unwrap();
+        let quest_name = quest_node
+            .attributes()
+            .find(|att| att.name() == "strName")
+            .unwrap()
+            .value();
 
         self.quest = Some(quest_name.to_string());
     }
@@ -147,8 +203,14 @@ impl Character {
         let doc = Document::parse(data).unwrap();
         let root = doc.root_element();
 
-        let bank_node = root.children().find(|node| node.tag_name().name() == "bank").unwrap();
-        let items: Vec<Node> = bank_node.children().filter(|node| node.tag_name().name() == "items").collect();
+        let bank_node = root
+            .children()
+            .find(|node| node.tag_name().name() == "bank")
+            .unwrap();
+        let items: Vec<Node> = bank_node
+            .children()
+            .filter(|node| node.tag_name().name() == "items")
+            .collect();
 
         let mut bank_items = Vec::new();
 
@@ -167,20 +229,16 @@ impl Character {
             if let Some(item_in_inventory) = self.inventory.iter_mut().find(|i| i.id == item.id) {
                 if item_in_inventory.max_item_amount > item_in_inventory.item_amount {
                     item_in_inventory.item_amount += 1;
-                }
-                else {
+                } else {
                     self.inventory.push(item);
                 }
-            }
-            else if let Some(item_in_bank) = self.bank.iter_mut().find(|i| i.id == item.id) {
+            } else if let Some(item_in_bank) = self.bank.iter_mut().find(|i| i.id == item.id) {
                 if item_in_bank.max_item_amount > item_in_bank.item_amount {
                     item_in_bank.item_amount += 1;
-                }
-                else {
+                } else {
                     self.bank.push(item);
                 }
-            }
-            else {
+            } else {
                 self.inventory.push(item);
             }
         }
@@ -188,8 +246,15 @@ impl Character {
 
     fn parse_quest_complete(&mut self, data: &str) {
         let doc = Document::parse(data).unwrap();
-        let quest_reward_node = doc.root_element().children().find(|node| node.tag_name().name() == "questreward").unwrap();
-        let item_node = quest_reward_node.children().find(|node| node.tag_name().name() == "items").unwrap();
+        let quest_reward_node = doc
+            .root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "questreward")
+            .unwrap();
+        let item_node = quest_reward_node
+            .children()
+            .find(|node| node.tag_name().name() == "items")
+            .unwrap();
 
         self.quest = None;
         self.current_quest_reward = parse_item_node(item_node);
@@ -197,7 +262,16 @@ impl Character {
 
     fn parse_class_load(&mut self, data: &str) {
         let doc = Document::parse(data).unwrap();
-        let character_node = doc.root_element().children().find(|node| node.tag_name().name() == "character").unwrap();
-        self.class = character_node.attributes().find(|att| att.name() == "strClassName").unwrap().value().to_string();
+        let character_node = doc
+            .root_element()
+            .children()
+            .find(|node| node.tag_name().name() == "character")
+            .unwrap();
+        self.class = character_node
+            .attributes()
+            .find(|att| att.name() == "strClassName")
+            .unwrap()
+            .value()
+            .to_string();
     }
 }

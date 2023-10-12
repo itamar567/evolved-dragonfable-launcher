@@ -15,13 +15,7 @@ pub fn write_file<C: AsRef<[u8]>>(
     data: C,
     encode: bool,
     clear_cache_if_changed: bool,
-) -> Result<(), ()> {
-    if let Some(dir) = dest.parent() {
-        if !dir.exists() && fs::create_dir_all(dir).is_err() {
-            return Err(());
-        }
-    }
-
+) -> Result<(), anyhow::Error> {
     let encoded_data_string = BASE64_ENGINE.encode(&data);
     let data = if encode {
         encoded_data_string.as_bytes()
@@ -33,16 +27,20 @@ pub fn write_file<C: AsRef<[u8]>>(
         if let Ok(old_data) = fs::read(dest) {
             if old_data != data {
                 // The file was changed, we should clear the cache
-                if fs::remove_dir_all(PROJECT_DIRS.cache_dir()).is_err() {
-                    return Err(());
+                if PROJECT_DIRS.cache_dir().is_dir() {
+                    fs::remove_dir_all(PROJECT_DIRS.cache_dir())?;
                 }
             }
         }
     }
 
-    if fs::write(dest, data).is_err() {
-        return Err(());
+    if let Some(dir) = dest.parent() {
+        if !dir.exists() {
+            fs::create_dir_all(dir)?;
+        }
     }
+
+    fs::write(dest, data)?;
 
     Ok(())
 }
