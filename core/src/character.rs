@@ -251,13 +251,17 @@ impl Character {
             .children()
             .find(|node| node.tag_name().name() == "questreward")
             .unwrap();
-        let item_node = quest_reward_node
-            .children()
-            .find(|node| node.tag_name().name() == "items")
-            .unwrap();
 
         self.quest = None;
-        self.current_quest_reward = parse_item_node(item_node);
+
+        if let Some(item_node) = quest_reward_node
+            .children()
+            .find(|node| node.tag_name().name() == "items")
+        {
+            self.current_quest_reward = parse_item_node(item_node);
+        } else {
+            self.current_quest_reward = None;
+        }
     }
 
     fn parse_class_load(&mut self, data: &str) {
