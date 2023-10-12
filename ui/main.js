@@ -105,11 +105,11 @@ let cacheDir;
 
 if (process.platform === "linux") {
     pluginName = "plugins/libpepflashplayer.so";
-    cacheDir = process.env.XDG_CACHE_HOME + "/evolved-dragonfable-launcher"
+    cacheDir = process.env.XDG_CACHE_HOME + "/evolved-dragonfable-launcher";
 }
 else {
     pluginName = "plugins/pepflashplayer.dll";
-    cacheDir = "%APPDATA%\\..\\Local\\itmr\\Evolved-DragonFable-Launcher\\cache"
+    cacheDir = join(homedir(), "AppData\\Local\\itmr\\Evolved-DragonFable-Launcher\\cache");
 }
 
 app.commandLine.appendSwitch("ppapi-flash-path", join(__dirname, pluginName))
