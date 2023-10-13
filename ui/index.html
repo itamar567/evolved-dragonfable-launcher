@@ -588,7 +588,7 @@
                 version_data = await response.json()
     
                 
-                if (versionCompare("1.1.0", version_data["tag_name"].substring(1)) < 0) {
+                if (versionCompare("1.1.1", version_data["tag_name"].substring(1)) < 0) {
                     new_version_link.style.display = "flex"
                     new_version_link.href = "https://github.com/itamar567/evolved-dragonfable-launcher/releases/latest"
                     new_version_link.target = "_blank"
