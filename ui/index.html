@@ -76,7 +76,7 @@
                         </label>
                         <div style="display: flex; flex-direction: row; align-items: center">
                             <button id="toggle_button" onclick="toggleTimer()">Start</button>
-                            <button id="pause_button" style="display: none" onclick="toggleTimerPause(true)">Pause</button>
+                            <button id="pause_button" style="display: none" onclick="toggleTimerPause()">Pause</button>
                         </div>
                     </div>
           
@@ -244,13 +244,13 @@
                 }
             }
 
-            function toggleTimerPause(update_rate) {
+            function toggleTimerPause() {
                 if (isPaused) {
                     trackInterval = setInterval(updateTimer, 1000);
                     isPaused = false;
                     pause_button.textContent = "Pause";
 
-                    updateItemTracking(update_rate);
+                    updateItemTracking(false);
                 }
                 else {
                     pause_button.textContent = "Continue";
@@ -414,7 +414,7 @@
                         // Gained an item while paused
                         // Stop pausing, but don't count the items we just got
                         trackedItems -= amount_gained;
-                        toggleTimerPause(false);
+                        toggleTimerPause();
                     }
                     else {
                         updateItemTracking(true);
