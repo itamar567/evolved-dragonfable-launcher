@@ -60,7 +60,7 @@
                                 <label id="items_left_for_goal"></label>
                                 <br>
                             </div>
-                            <div id="estimated_time_until_goal_container" style="display: none; flex-direction: column; align-items: center">
+                            <div id="estimated_time_until_goal_container" style="display: none; flex-direction: row; align-items: center">
                                 <label>Estimated time:&nbsp;</label>
                                 <label id="estimated_time_until_goal"></label>
                             </div>
@@ -263,23 +263,23 @@
                 let hours = Math.floor((seconds % 86400) / 3600);
                 let minutes = Math.floor((seconds % 3600) / 60);
 
-                let colonNeeded = false;
+                let spaceNeeded = false;
                 let result = "";
                 if (days !== 0) {
-                    result += `${days} day(s)`;
-                    colonNeeded = true;
+                    result += `${days}d`;
+                    spaceNeeded = true;
                 }
                 if (hours !== 0) {
-                    if (colonNeeded) {
-                        result += ", "
+                    if (spaceNeeded) {
+                        result += " "
                     }
-                    result += `${hours} hour(s)`
-                    colonNeeded = true;
+                    result += `${hours}h`
+                    spaceNeeded = true;
                 }
-                if (colonNeeded) {
-                    result += ", ";
+                if (spaceNeeded) {
+                    result += " ";
                 }
-                result += `${minutes} minute(s)`
+                result += `${minutes}m`
 
                 return result;
             }
