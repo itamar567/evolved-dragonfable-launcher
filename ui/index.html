@@ -74,7 +74,10 @@
                         <label>
                             Goal:&nbsp;<input type="number" id="goal" onchange="updateItemTracking(false)">
                         </label>
-                        <button id="toggle_button" onclick="toggleTimer()">Start</button>
+                        <div style="display: flex; flex-direction: row; align-items: center">
+                            <button id="toggle_button" onclick="toggleTimer()">Start</button>
+                            <button id="pause_button" style="display: none" onclick="toggleTimerPause(true)">Pause</button>
+                        </div>
                     </div>
           
 
@@ -128,6 +131,7 @@
             let items_left_for_goal = document.getElementById("items_left_for_goal");
             let goal = document.getElementById("goal");
             let toggle_button = document.getElementById("toggle_button");
+            let pause_button = document.getElementById("pause_button");
             let item_tracker = document.getElementById("item_tracker");
             let goal_stats_container = document.getElementById("goal_stats_container");
 
@@ -213,24 +217,44 @@
 
             let trackedSeconds = 0;
             let trackedItems = 0;
-            let isPaused = true;
+            let isStopped = true;
+            let isPaused = false;
             let trackInterval;
             let rate;
 
             function updateTimer() {
-                trackedSeconds++;
+                if (!isPaused) {
+                    trackedSeconds++;
+                }
             }
 
             function toggleTimer() {
-                if (isPaused) {
+                if (isStopped) {
                     trackInterval = setInterval(updateTimer, 1000);
-                    isPaused = false;
-                    toggle_button.textContent = "Stop"
+                    isStopped = false;
+                    isPaused = false
+                    toggle_button.textContent = "Stop";
+                    pause_button.textContent = "Pause";
+                    pause_button.style.display = "flex";
 
                     updateItemTracking(false);
                 }
                 else {
                     resetItemTracking();
+                }
+            }
+
+            function toggleTimerPause(update_rate) {
+                if (isPaused) {
+                    trackInterval = setInterval(updateTimer, 1000);
+                    isPaused = false;
+                    pause_button.textContent = "Pause";
+
+                    updateItemTracking(update_rate);
+                }
+                else {
+                    pause_button.textContent = "Continue";
+                    isPaused = true;
                 }
             }
 
@@ -269,8 +293,11 @@
                 clearInterval(trackInterval);
                 trackedSeconds = 0;
                 trackedItems = 0;
-                isPaused = true;
+                isStopped = true;
+                isPaused = false;
                 toggle_button.textContent = "Start";
+                pause_button.textContent = "Pause";
+                pause_button.style.display = "none";
                 average_item_rate_container.style.display = "none";
                 estimated_time_until_goal_container.style.display = "none";
                 updateItemTracking(true);
@@ -335,7 +362,7 @@
                 if (update_rate) {
                     rate = (trackedItems / trackedSeconds) * 60;
                 }
-                let enable_item_rate_stats = !isPaused && isNumber(rate) && rate !== 0;
+                let enable_item_rate_stats = !isStopped && isNumber(rate) && rate !== 0;
                 if (enable_item_rate_stats) {
                     average_item_rate_container.style.display = "flex";
                     average_item_rate.textContent = rate.toFixed(2);
@@ -363,14 +390,15 @@
 
             function updateItem(json_data) {
                 let gained_item = false;
+                let amount_gained;
                 for (let item_key in json_data.all_items) {
                     let item = json_data.all_items[item_key];
                     if (item.id === current_item.id) {
-                        let amount_gained = item.item_amount - current_item.item_amount;
+                        amount_gained = item.item_amount - current_item.item_amount;
                         if (amount_gained > 0) {
                             gained_item = true;
                         }
-                        if (!isPaused) {
+                        if (!isStopped) {
                             trackedItems += amount_gained;
                         }
                         current_item_count.textContent = item.item_amount;
@@ -382,7 +410,15 @@
                 updateItemSelection(json_data);
 
                 if (gained_item) {
-                    updateItemTracking(true);
+                    if (isPaused) {
+                        // Gained an item while paused
+                        // Stop pausing, but don't count the items we just got
+                        trackedItems -= amount_gained;
+                        toggleTimerPause(false);
+                    }
+                    else {
+                        updateItemTracking(true);
+                    }
                 }
             }
 
