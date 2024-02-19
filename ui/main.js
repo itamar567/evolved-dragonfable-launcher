@@ -172,10 +172,6 @@ app.whenReady().then(() => {
                 click: () => {
                     win.webContents.executeJavaScript("toggleZenMode()")
                 }
-            },
-            {
-                label: "Developer Tools",
-                role: "toggleDevTools",
             }
         ]
     }))
