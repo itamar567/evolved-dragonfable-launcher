@@ -13,11 +13,19 @@
     </head>
     <body style="user-select: none; background-color: #660000; color: white; margin: 0; display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch">
         <div style="flex: 1">
-            <div id="left_panel" style="display: flex; flex-direction: column; align-items: center">
+            <div id="left_panel" style="display: flex; flex-direction: column; align-items: center; height: 100vh">
                 <button onclick="window.open('https://docs.google.com/document/d/1gyr3vcvJtlBkxUud89iPe8r68_Qp6TY2cBDl3ujQDOw')">Guides</button>
                 <div style="display: flex; flex-direction: column; align-items: center">
                     <button id="class_wiki_button" style="display: none"></button>
                     <button id="quest_wiki_button" style="display: none"></button>
+                </div>
+                <div id="log_panel" style="display: flex; flex-direction: column; width: 90%; flex: 1; margin-top: 8px; min-height: 0">
+                    <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between">
+                        <label style="font-family: BlackChancery, serif">Game Log</label>
+                        <button id="log_toggle_button" onclick="toggleLogView()" style="font-size: 11px">Battle</button>
+                    </div>
+                    <div id="game_log" style="flex: 1; overflow-y: auto; font-size: 16px; background-color: rgba(0,0,0,0.3); padding: 4px; min-height: 0; word-wrap: break-word; user-select: text"></div>
+                    <div id="battle_log" style="flex: 1; overflow-y: auto; font-size: 16px; background-color: rgba(0,0,0,0.3); padding: 4px; min-height: 0; word-wrap: break-word; display: none; user-select: text"></div>
                 </div>
             </div>
         </div>
@@ -25,6 +33,8 @@
         <div id="game_container">
             <embed base="http://127.0.0.1:39260/game/" src="http://127.0.0.1:39260/game/DFLoader.swf" id="game" style="flex: 3">
         </div>
+
+        <embed src="http://127.0.0.1:39621/log_bridge.swf" type="application/x-shockwave-flash" width="1" height="1" allowScriptAccess="always" style="position: absolute; opacity: 0;">
 
         <div style="flex: 1">
             <div id="right_panel" style="flex: 1; display: flex; flex-direction: column; align-items: center">
@@ -596,6 +606,65 @@
             }
 
             check_version()
+
+            let game_log = document.getElementById("game_log");
+            let battle_log = document.getElementById("battle_log");
+            let log_toggle_button = document.getElementById("log_toggle_button");
+            let log_showing_game = true;
+
+            const LOG_COLOR_MAP = {
+                "#000000": "#FFFFFF",
+                "#333333": "#CCCCCC",
+                "#006666": "#00CCCC",
+                "#660000": "#FF6666",
+                "#0033ff": "#6699FF",
+                "#0033FF": "#6699FF"
+            };
+
+            function remapLogColors(html) {
+                for (let dark in LOG_COLOR_MAP) {
+                    html = html.split(dark).join(LOG_COLOR_MAP[dark]);
+                }
+                return html;
+            }
+
+            function setLog(element, text) {
+                if (text === "" || text == null) return;
+                element.innerHTML = remapLogColors(text).split("\n").join("<br>");
+                element.scrollTop = element.scrollHeight;
+            }
+
+            function receiveGameLog(text) {
+                setLog(game_log, decodeURIComponent(text));
+            }
+
+            function receiveBattleLog(text) {
+                setLog(battle_log, decodeURIComponent(text));
+            }
+
+            function onLogReset() {
+                game_log.innerHTML = "";
+                battle_log.innerHTML = "";
+                lastGameLogText = "";
+                lastBattleLogText = "";
+            }
+
+            function onLogSwap() {
+                toggleLogView();
+            }
+
+            function toggleLogView() {
+                log_showing_game = !log_showing_game;
+                if (log_showing_game) {
+                    game_log.style.display = "";
+                    battle_log.style.display = "none";
+                    log_toggle_button.textContent = "Battle";
+                } else {
+                    game_log.style.display = "none";
+                    battle_log.style.display = "";
+                    log_toggle_button.textContent = "Game";
+                }
+            }
         </script>
     </body>
 </html>

@@ -1,4 +1,3 @@
-#![feature(lazy_cell)]
 #![windows_subsystem = "windows"]
 
 #[cfg(not(debug_assertions))]

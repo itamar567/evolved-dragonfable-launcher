@@ -2,7 +2,7 @@ const { app, BrowserWindow, Menu, MenuItem, shell, session } = require("electron
 const {join, sep, isAbsolute, resolve, dirname} = require("path")
 const express = require("express")
 const {existsSync, mkdirSync, readdirSync, rmdirSync, unlinkSync, lstatSync} = require("fs");
-const {copySync} = require("fs-extra/lib/copy");
+const {copyFileSync} = require("fs");
 const {homedir} = require("os");
 
 function deleteFolderRecursive(directoryPath) {
@@ -16,6 +16,19 @@ function deleteFolderRecursive(directoryPath) {
         }
       });
       rmdirSync(directoryPath);
+    }
+}
+
+function copyDirSync(src, dest) {
+    mkdirSync(dest, { recursive: true });
+    for (const entry of readdirSync(src)) {
+        const srcPath = join(src, entry);
+        const destPath = join(dest, entry);
+        if (lstatSync(srcPath).isDirectory()) {
+            copyDirSync(srcPath, destPath);
+        } else {
+            copyFileSync(srcPath, destPath);
+        }
     }
 }
 
@@ -95,7 +108,7 @@ if (!existsSync(writable_root_path)) {
     if (user_pref_dir && object_dir_id) {
         let target_dir = join(writable_root_path, "#SharedObjects", object_dir_id, "127.0.0.1");
         mkDirByPathSync(dirname(target_dir));
-        copySync(user_pref_dir, target_dir);
+        copyDirSync(user_pref_dir, target_dir);
     }
 }
 
@@ -133,21 +146,46 @@ const createWindow = () => {
 
     win.loadFile("index.html")
 
-    const app = express()
-    app.use(express.json())
+    const exp = express()
+    exp.use(express.json())
+    exp.use(express.urlencoded({ extended: false }))
 
-    app.post("/character", (req, res) => {
+    exp.post("/character", (req, res) => {
         win.webContents.executeJavaScript("receiveCharacterData(\"" + encodeURIComponent(JSON.stringify(req.body)) + "\")").then(_ => {})
         res.send("")
     })
 
-    app.get("/clear_cache", (req, res) => {
+    exp.get("/log_bridge.swf", (req,res) => {
+        res.sendFile(join(app.getAppPath(), "/log_bridge.swf"))
+    })
+
+    exp.post("/game_log", (req, res) => {
+        win.webContents.executeJavaScript("receiveGameLog(\"" + encodeURIComponent(req.body.text|| "") + "\")").then(_ => {})
+        res.send("")
+    })
+
+    exp.post("/battle_log", (req, res) => {
+        win.webContents.executeJavaScript("receiveBattleLog(\"" + encodeURIComponent(req.body.text|| "") + "\")").then(_ => {})
+        res.send("")
+    })
+
+    exp.post("/log_reset", (req, res) => {
+        win.webContents.executeJavaScript("onLogReset()").then(_ => {})
+        res.send("")
+    })
+
+    exp.post("/log_swap", (req, res) => {
+        win.webContents.executeJavaScript("onLogSwap()").then(_ => {})
+        res.send("")
+    })
+
+    exp.get("/clear_cache", (req, res) => {
       session.defaultSession.clearCache(() => {})
       deleteFolderRecursive(cacheDir)
       res.send("")
     })
 
-    app.listen(39621, "127.0.0.1", () => {})
+    exp.listen(39621, "127.0.0.1", () => {})
 }
 
 app.whenReady().then(() => {
